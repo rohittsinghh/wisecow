@@ -74,28 +74,39 @@ jobs:
         version: 'latest'
       
     - name: Configure Kubernetes context
-      if: ${{ secrets.KUBE_CONFIG != '' }}
       run: |
+        if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+          echo "KUBE_CONFIG secret not configured - skipping deployment"
+          exit 0
+        fi
         mkdir -p $HOME/.kube
         echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
         chmod 600 $HOME/.kube/config
         
     - name: Update deployment image
-      if: ${{ secrets.KUBE_CONFIG != '' }}
       run: |
+        if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+          echo "KUBE_CONFIG secret not configured - skipping deployment"
+          exit 0
+        fi
         kubectl set image deployment/wisecow-deployment \
           wisecow=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:main-${{ github.sha }} \
           -n wisecow-app \
           --record
         
     - name: Verify deployment
-      if: ${{ secrets.KUBE_CONFIG != '' }}
       run: |
+        if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+          echo "KUBE_CONFIG secret not configured - skipping verification"
+          exit 0
+        fi
         kubectl rollout status deployment/wisecow-deployment -n wisecow-app --timeout=300s
         kubectl get pods -n wisecow-app -l app=wisecow
         
-    - name: Deployment skipped notification
-      if: ${{ secrets.KUBE_CONFIG == '' }}
+    - name: Deployment note
       run: |
-        echo "::notice::Deployment skipped - KUBE_CONFIG secret not configured"
-        echo "To enable automated deployment, add KUBE_CONFIG secret to repository"
+        echo "Build and push completed successfully!"
+        if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+          echo "Note: Automated deployment skipped - KUBE_CONFIG secret not configured"
+          echo "To enable automated deployment, add KUBE_CONFIG secret to repository"
+        fi
