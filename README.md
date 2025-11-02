@@ -92,12 +92,6 @@ The GitHub Actions workflow automatically:
 3. Pushes image to Docker Hub
 4. (Optional) Deploys to configured Kubernetes cluster
 
-### Required GitHub Secrets
-- `DOCKER_USERNAME`: Your Docker Hub username
-- `DOCKER_PASSWORD`: Your Docker Hub access token
-- `KUBE_CONFIG`: Base64-encoded kubeconfig (optional for auto-deploy)
-
-## 🔒 Repository Access
 
 **This is a PRIVATE repository.**
 
