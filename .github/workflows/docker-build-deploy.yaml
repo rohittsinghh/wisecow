@@ -1,0 +1,101 @@
+name: Build, Push and Deploy Wisecow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_IMAGE: wisecow
+  
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}
+        tags: |
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=ref,event=pr
+          
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+        
+    - name: Image digest
+      run: |
+        echo "Image pushed successfully!"
+        echo "Digest: ${{ steps.build.outputs.digest }}"
+        echo "Tags: ${{ steps.meta.outputs.tags }}"
+
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+      
+    - name: Configure Kubernetes context
+      if: ${{ secrets.KUBE_CONFIG != '' }}
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+        
+    - name: Update deployment image
+      if: ${{ secrets.KUBE_CONFIG != '' }}
+      run: |
+        kubectl set image deployment/wisecow-deployment \
+          wisecow=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:main-${{ github.sha }} \
+          -n wisecow-app \
+          --record
+        
+    - name: Verify deployment
+      if: ${{ secrets.KUBE_CONFIG != '' }}
+      run: |
+        kubectl rollout status deployment/wisecow-deployment -n wisecow-app --timeout=300s
+        kubectl get pods -n wisecow-app -l app=wisecow
+        
+    - name: Deployment skipped notification
+      if: ${{ secrets.KUBE_CONFIG == '' }}
+      run: |
+        echo "::notice::Deployment skipped - KUBE_CONFIG secret not configured"
+        echo "To enable automated deployment, add KUBE_CONFIG secret to repository"

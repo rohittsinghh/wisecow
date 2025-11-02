@@ -1,0 +1,39 @@
+# Kubernetes configs
+kubeconfig
+*.kubeconfig
+.kube/
+
+# Docker
+*.log
+
+# Certificates and Keys
+*.key
+*.crt
+*.pem
+*.p12
+*.pfx
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Sensitive data
+secrets/
+credentials/
