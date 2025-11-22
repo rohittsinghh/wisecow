@@ -92,14 +92,6 @@ The GitHub Actions workflow automatically:
 3. Pushes image to Docker Hub
 4. (Optional) Deploys to configured Kubernetes cluster
 
-
-**This is a PRIVATE repository.**
-
-**Authorized Collaborators:**
-- nyrahul (Project Reviewer)
-
-Access is granted with Write permissions for code review and evaluation purposes.
-
 ## 🛠️ Development
 
 ### Build Docker Image
@@ -126,8 +118,6 @@ kubectl describe pod -n wisecow-app -l app=wisecow
 text
 
 ## 🔐 Security Features
-
-- Private GitHub repository with controlled access
 - Resource limits and health checks
 - Read-only container filesystem (where applicable)
 - Optional TLS encryption for all traffic
