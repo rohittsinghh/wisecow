@@ -1,6 +1,3 @@
-covert the following text into markdown "Step 31: Create README.md
-bash
-cat > README.md << 'EOF'
 # Wisecow Kubernetes Deployment Project
 
 A containerized deployment of the Wisecow application on Kubernetes with automated CI/CD pipeline and secure TLS support.
