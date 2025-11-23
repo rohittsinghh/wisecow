@@ -55,7 +55,7 @@ text
 
 1. **Clone the repository**
 
-git clone [https://github.com/YOUR_USERNAME/wisecow.git](https://github.com/rohittsinghh/wisecow.git)
+git clone [https://github.com/rohittsinghh/wisecow.git](https://github.com/rohittsinghh/wisecow.git)
 cd wisecow
 text
 
